@@ -71,6 +71,10 @@ export default {
       type: String,
       default: 'No Data',
     },
+    useEventSearch: {
+      type: Boolean,
+      default: false,
+    },
   },
   data() {
     return {
@@ -156,8 +160,7 @@ export default {
             if (this.simpleArray
               && this.globalModel[i][this.list][j][this.labelValue] === this.value[k]) {
               this.globalModel[i][this.list][j][this.labelSelected] = true;
-              this.valueSelected.push(this.globalModel[i][
-                this.list][j][this.labelValue]);
+              this.valueSelected.push(this.globalModel[i][this.list][j][this.labelValue]);
             } else if (!this.simpleArray
               && this.globalModel[i][this.list][j][this.labelValue]
               === this.value[k][this.labelValue]) {
@@ -204,7 +207,7 @@ export default {
       if (!option[this.labelSelected]) {
         this.previousSelected.push(this.cloneData(this.valueSelected));
         if (!this.multi) {
-          this.deselctAll();
+          this.deselectAll();
           this.valueSelected = [];
           this.externalClick({ path: [] });
         }
@@ -247,20 +250,15 @@ export default {
       this.searchfn();
     },
     searchfn() {
-      let allHide = true;
-      for (let i = 0; i < this.globalModel[this.idSelectedTab][this.list].length;
-        i += 1) {
-        if (~this.globalModel[this.idSelectedTab][this.list][i][this.labelName]
-          .toLowerCase().indexOf(
-            this.searchInput.toLowerCase(),
-          )) {
-          allHide = false;
-          this.globalModel[this.idSelectedTab][this.list][i].visible = true;
-        } else {
-          this.globalModel[this.idSelectedTab][this.list][i].visible = false;
-        }
+      if (!this.useEventSearch) {
+        this.optionsAllHide = this.globalModel[this.idSelectedTab][this.list].map((listItem) => {
+          const inputValue = this.searchInput.toLowerCase();
+          const matchListAndInput = listItem[this.labelName].toLowerCase().includes(inputValue);
+          listItem.visible = matchListAndInput;
+          return matchListAndInput;
+        }).some();
       }
-      this.optionsAllHide = allHide;
+
       this.filter();
     },
     clearSearch() {
@@ -308,7 +306,7 @@ export default {
         this.filters[i].selectAll = allSelected;
       }
     },
-    deselctAll() {
+    deselectAll() {
       for (let i = 0; i < this.globalModel.length; i += 1) {
         for (let j = 0; j < this.globalModel[i][this.list].length; j += 1) {
           if (!this.globalModel[i][this.list][j][this.labelDisabled]) {
@@ -394,6 +392,13 @@ export default {
         }
       },
       deep: true,
+    },
+    searchInput: {
+      handler(newVal) {
+        if (this.useEventSearch) {
+          this.$emit('search-change', newVal);
+        }
+      },
     },
   },
   directives: {
